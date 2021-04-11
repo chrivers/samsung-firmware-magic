@@ -1,11 +1,11 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 from sys import stdin, stdout
 from struct import pack
 from Crypto.Cipher import AES
 
 ## this is the shuffle map that samsung uses
-shuffle = "".join(chr(c) for c in [
+shuffle = bytes([
            0x10, 0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17, 0x18, 0x19,
            0x1A, 0x1B, 0x1C, 0x1D, 0x1E, 0x1F, 0x30, 0x31, 0x32, 0x33,
            0x34, 0x35, 0x36, 0x37, 0x38, 0x39, 0x3A, 0x3B, 0x3C, 0x3D,
@@ -35,25 +35,25 @@ shuffle = "".join(chr(c) for c in [
 ])
 
 ## generate reverse map
-lookup = [chr(shuffle.find(chr(i))) for i in range(256)]
+lookup = bytes(shuffle.find(i) for i in range(256))
 
 ## utility functions
 def xor(s1, s2):
-    return ''.join(chr(ord(a) ^ ord(b)) for a, b in zip(s1, s2))
+    return bytes(a ^ b for a,b in zip(s1, s2))
 
 def unshuffle(s):
-    return "".join(lookup[ord(c)] for c in s)
+    return bytes(lookup[c] for c in s)
 
 ## crypto constants
-iv0 = "8ce82eefbea0da3c44699ed7".decode("hex")
-key = "56e47a38c5598974bc46903dba290349".decode("hex")
+iv0 = bytes.fromhex("8ce82eefbea0da3c44699ed7")
+key = bytes.fromhex("56e47a38c5598974bc46903dba290349")
 ctr = 0
 aes = AES.new(key, AES.MODE_ECB)
 
 while True:
     ## read next aes block
-    blk = stdin.read(16)
-    if blk == "":
+    blk = stdin.buffer.read(16)
+    if len(blk) == 0:
         break
 
     ## samsung arbitrarily resets the counter every 32 blocks
@@ -68,4 +68,4 @@ while True:
     ## decrypt and unshufflee to get our result
     res = unshuffle(xor(xblk, blk))
 
-    stdout.write(res)
+    stdout.buffer.write(res)
